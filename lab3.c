@@ -52,10 +52,10 @@ void * multiplica (void *arg){
 }
 
 
-//Recebendo e lendo matrizes binárias geradas anteriormente
+//Função Principal
 int main(int argc, char*argv[]) {
-      //recebe os argumentos de entrada
-   if(argc < 2) {
+   //recebe os argumentos de entrada
+   if(argc < 3) {
       fprintf(stderr, "Digite: %s <arquivo matriz 1> <arquivo matriz 2> <arquivo de saída>\n", argv[0]);
       return 1;
    }
@@ -66,15 +66,17 @@ int main(int argc, char*argv[]) {
    
    //para carregar os binários das matrizes
    float *matriz;
+   float *matrix;
    int linhas, colunas;
    long long int tam;
    FILE * descritorArquivo; //descritor do arquivo de entrada
    size_t ret; //retorno da funcao de leitura no arquivo de entrada
 
    pthread_t id_tds_sys[nthreads]; //criando lista com os identificadores das threads a serem criadas
-   //lendo e armazenando as matrizes
-   for (int i=1; i < 3; i++){
-      
+   //Recebendo e lendo as matrizes binárias geradas anteriormente
+
+   for (int i=1; i<argc; i++){
+
       //abre o arquivo para leitura binaria
       descritorArquivo = fopen(argv[i], "rb");
       if(!descritorArquivo) {
@@ -95,23 +97,22 @@ int main(int argc, char*argv[]) {
       }
       tam = linhas * colunas; //calcula a qtde de elementos da matriz
 
-      //aloca memoria para a matriz
-      matriz = (float*) malloc(sizeof(float) * tam);
-      if(!matriz) {
-         fprintf(stderr, "Erro de alocao da memoria da matriz\n");
-         return 3;
-      }
-      
 
-      //carrega a matriz de elementos do tipo float do arquivo
-      ret = fread(matriz, sizeof(float), tam, descritorArquivo);
-      if(ret < tam) {
-         fprintf(stderr, "Erro de leitura dos elementos da matriz\n");
-         return 4;
-      }
+      if(i == 1){
+         //aloca memoria para a matriz
+         matriz = (float*) malloc(sizeof(float) * tam);
+         if(!matriz) {
+            fprintf(stderr, "Erro de alocao da memoria da matriz\n");
+            return 3;
+         }
+         
 
-
-      if(i ==1){
+         //carrega a matriz de elementos do tipo float do arquivo
+         ret = fread(matriz, sizeof(float), tam, descritorArquivo);
+         if(ret < tam) {
+            fprintf(stderr, "Erro de leitura dos elementos da matriz\n");
+            return 4;
+         }
          //aloca memoria para a struct matriz_1
          matriz_1 = malloc(sizeof(float) * tam);
          if(!matriz) {
@@ -124,26 +125,46 @@ int main(int argc, char*argv[]) {
          matriz_1->tam = tam;
          matriz_1->matriz = matriz;
          }
-      if(i==2){
+      if(i == 2){
+         //aloca memoria para a matriz
+         matrix = (float*) malloc(sizeof(float) * tam);
+         if(!matrix) {
+            fprintf(stderr, "Erro de alocao da memoria da matriz 2\n");
+            return 3;
+         }
+         
+
+         //carrega a matriz de elementos do tipo float do arquivo
+         ret = fread(matrix, sizeof(float), tam, descritorArquivo);
+         if(ret < tam) {
+            fprintf(stderr, "Erro de leitura dos elementos da matriz 2\n");
+            return 4;
+         }
          //aloca memoria para a struct matriz_2
          matriz_2 = malloc(sizeof(float) * tam);
-         if(!matriz) {
-            fprintf(stderr, "Erro de alocao da memoria da matriz\n");
+         if(!matriz_2) {
+            fprintf(stderr, "Erro de alocao da memoria da matriz 2\n");
             return 3;
          }
          //passando os dados para a struct
          matriz_2->linhas = linhas;
          matriz_2->colunas = colunas;
          matriz_2->tam = tam;
-         matriz_2->matriz = matriz;
+         matriz_2->matriz = matrix;
          }
    }
-   //liberando memória depois de salvar os dados na struct
+   //liberando os vetores usados para inicializar as matrizes na struct
    free(matriz);
+   free(matrix);
+   //alocando memória para a matriz resultante
+   matriz_final = (float *) malloc(sizeof(float)*matriz_1->colunas * matriz_2->linhas);
+   //verificando se é possível fazer a multiplicação
    if (matriz_1->colunas != matriz_2->linhas){
       printf("Núero de linhas não é igual ao de colunas!");
       return 4;
    }
+
+   //Para fins ilustrativos
    printf("Matriz 1:\n");
    for(int i=0; i<matriz_1->linhas; i++) { 
       for(int j=0; j<matriz_1->colunas; j++)
@@ -155,9 +176,7 @@ int main(int argc, char*argv[]) {
       for(int j=0; j<matriz_2->colunas; j++)
         fprintf(stdout, "%.6f ", matriz_2->matriz[i*matriz_2->colunas+j]);
       fprintf(stdout, "\n");
-   }
-   //alocando memória para a matriz final
-   matriz_final = malloc(matriz_1->colunas * matriz_2->linhas);
+   }//
 
    for(int i =0; i < nthreads; i++ ){ //loop para criação e incialização das threads
         printf("--Alocando e preenchendo argumentos para a thread %d\n", i);
