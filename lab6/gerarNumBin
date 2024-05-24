@@ -1,0 +1,49 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int main() {
+    FILE *file;
+    int N;
+    int *numbers;
+
+    // Solicitar ao usuário a quantidade de números inteiros
+    printf("Digite a quantidade de números inteiros: ");
+    scanf("%d", &N);
+
+    // Alocar memória para armazenar os números inteiros
+    numbers = (int *)malloc(N * sizeof(int));
+    if (numbers == NULL) {
+        fprintf(stderr, "Erro de alocação de memória.\n");
+        return 1;
+    }
+
+    // Inicializar o gerador de números aleatórios
+    srand(time(NULL));
+
+    // Gerar números inteiros aleatórios
+    for (int i = 0; i < N; i++) {
+        numbers[i] = rand();
+    }
+
+    // Abrir o arquivo binário para escrita
+    file = fopen("numeros.bin", "wb");
+    if (file == NULL) {
+        fprintf(stderr, "Erro ao abrir o arquivo.\n");
+        free(numbers);
+        return 1;
+    }
+
+    // Escrever os números inteiros no arquivo binário
+    fwrite(numbers, sizeof(int), N, file);
+
+    // Fechar o arquivo
+    fclose(file);
+
+    // Liberar a memória alocada
+    free(numbers);
+
+    printf("Arquivo binário 'numeros.bin' gerado com sucesso.\n");
+
+    return 0;
+}
